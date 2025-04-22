@@ -14,8 +14,21 @@ module.exports = (eventDao) => {
       });
     },
 
-    addEvent: (event, callback) => {
-      eventDao.create(event, callback);
+    addEvent: (event, userId, callback) => {
+      const eventWithUser = { ...event, created_by: userId };
+      eventDao.create(eventWithUser, callback);
+    },
+
+    getEvent: (id, callback) => {
+      eventDao.getById(id, callback);
+    },
+
+    updateEvent: (id, event, callback) => {
+      eventDao.update(id, event, callback);
+    },
+
+    deleteEvent: (id, callback) => {
+      eventDao.delete(id, callback);
     },
   };
 };

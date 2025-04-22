@@ -1,9 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { isAuthenticated } = require("../middleware/auth");
+const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
 module.exports = (eventService) => {
-  // Lista wydarzeń z paginacją
   router.get("/", (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = 9;
@@ -36,10 +35,63 @@ module.exports = (eventService) => {
     );
   });
 
-  // Dodawanie nowego wydarzenia - protected by auth middleware
   router.post("/add", isAuthenticated, (req, res) => {
-    eventService.addEvent(req.body, (err) => {
-      if (err) return res.status(500).send("Błąd dodawania wydarzenia");
+    eventService.addEvent(req.body, req.session.user.id, (err) => {
+      if (err) {
+        if (err.code === "ER_DUP_ENTRY") {
+          req.flash("error", "Wydarzenie o tym tytule lub linku już istnieje");
+        } else {
+          req.flash("error", "Błąd dodawania wydarzenia");
+        }
+        return res.redirect("/events");
+      }
+      req.flash("success", "Wydarzenie zostało dodane pomyślnie");
+      res.redirect("/events");
+    });
+  });
+
+  router.get("/:id", (req, res) => {
+    eventService.getEvent(req.params.id, (err, event) => {
+      if (err) return res.status(500).send("Błąd pobierania wydarzenia");
+      if (!event)
+        return res.status(404).send("Wydarzenie nie zostało znalezione");
+
+      res.render("event-details", { event });
+    });
+  });
+
+  router.get("/:id/edit", isAdmin, (req, res) => {
+    eventService.getEvent(req.params.id, (err, event) => {
+      if (err) return res.status(500).send("Błąd pobierania wydarzenia");
+      if (!event)
+        return res.status(404).send("Wydarzenie nie zostało znalezione");
+
+      res.render("edit-event", { event });
+    });
+  });
+
+  router.post("/:id/edit", isAdmin, (req, res) => {
+    eventService.updateEvent(req.params.id, req.body, (err) => {
+      if (err) {
+        if (err.code === "ER_DUP_ENTRY") {
+          req.flash("error", "Wydarzenie o tym tytule lub linku już istnieje");
+        } else {
+          req.flash("error", "Błąd aktualizacji wydarzenia");
+        }
+        return res.redirect(`/events/${req.params.id}/edit`);
+      }
+      req.flash("success", "Wydarzenie zostało zaktualizowane pomyślnie");
+      res.redirect("/events");
+    });
+  });
+
+  router.post("/:id/delete", isAdmin, (req, res) => {
+    eventService.deleteEvent(req.params.id, (err) => {
+      if (err) {
+        req.flash("error", "Błąd usuwania wydarzenia");
+        return res.redirect("/events");
+      }
+      req.flash("success", "Wydarzenie zostało usunięte pomyślnie");
       res.redirect("/events");
     });
   });

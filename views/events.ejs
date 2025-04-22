@@ -1,218 +1,347 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista wydarzeń</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Optional custom CSS to extend Bootstrap -->
-    <style>
-      .event-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista wydarzeń</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .event-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-      .event-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-      }
+    .event-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
 
-      .pagination .page-item.active .page-link {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-      }
+    .pagination .page-item.active .page-link {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
 
-      .event-card.text-muted {
-        opacity: 0.7;
-        transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-      }
+    .event-card.text-muted {
+      opacity: 0.7;
+      transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-      .event-card.text-muted:hover {
-        opacity: 0.9;
-      }
-    </style>
-  </head>
-  <body class="bg-light">
-    <div class="container py-5">
-      <!-- Navigation bar with user info -->
-      <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
-        <div class="container-fluid">
-          <a class="navbar-brand" href="/events">System wydarzeń</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-              <% if (isAuthenticated) { %>
+    .event-card.text-muted:hover {
+      opacity: 0.9;
+    }
+
+    /* Truncate text styles */
+    .text-truncate {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .description-truncate {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      height: 4.5em;
+    }
+
+    /* Image styles */
+    .event-image-container {
+      position: relative;
+      height: 180px;
+      overflow: hidden;
+    }
+
+    .event-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Past event overlay */
+    .event-completed-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0.9;
+    }
+
+    .event-completed-overlay .badge {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Button group */
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+    }
+
+    .btn-group .btn {
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/events">System wydarzeń</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <% if (isAuthenticated) { %>
+              <% if (user.role === 'admin') { %>
                 <li class="nav-item">
-                  <span class="nav-link">Użytkownik: <%= user.username %></span>
-                </li>
-                <li class="nav-item">
-                  <a class="btn btn-danger" class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Wyloguj</a>
-                </li>
-              <% } else { %>
-                <li class="nav-item">
-                  <a class="btn btn-primary" class="nav-link" href="/auth/login">Zaloguj</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="/auth/register">Zarejestruj</a>
+                  <a class="nav-link" href="/admin">Panel Administratora</a>
                 </li>
               <% } %>
-            </ul>
+              <li class="nav-item">
+                <span class="nav-link">Witaj, <%= user.username %>
+                  <% if (user.role === 'admin') { %>
+                    <span class="badge bg-danger">Admin</span>
+                  <% } %>
+                </span>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Wyloguj</a>
+              </li>
+            <% } else { %>
+              <li class="nav-item">
+                <a class="nav-link" href="/auth/login">Zaloguj</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/auth/register">Zarejestruj</a>
+              </li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <h1 class="text-center mb-5">Wydarzenia</h1>
+
+    <!-- Add Event Button (only for logged in users) -->
+    <% if (isAuthenticated) { %>
+      <div class="text-center mb-4">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+          Dodaj nowe wydarzenie
+        </button>
+      </div>
+
+      <!-- Add Event Modal -->
+      <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="addEventModalLabel">Dodaj nowe wydarzenie</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form method="POST" action="/events/add" id="addEventForm">
+                <div class="mb-3">
+                  <label for="title" class="form-label">Tytuł</label>
+                  <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+                <div class="mb-3">
+                  <label for="location" class="form-label">Lokalizacja</label>
+                  <input type="text" class="form-control" id="location" name="location">
+                </div>
+                <div class="mb-3">
+                  <label for="date" class="form-label">Data</label>
+                  <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+                <div class="mb-3">
+                  <label for="description" class="form-label">Opis</label>
+                  <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="link" class="form-label">Link</label>
+                  <input type="url" class="form-control" id="link" name="link" placeholder="https://...">
+                </div>
+                <div class="mb-3">
+                  <label for="photo_url" class="form-label">Link do zdjęcia</label>
+                  <input type="url" class="form-control" id="photo_url" name="photo_url" placeholder="https://...">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+              <button type="submit" form="addEventForm" class="btn btn-primary">Dodaj</button>
+            </div>
           </div>
         </div>
-      </nav>
+      </div>
+    <% } %>
 
-      <h1 class="text-center mb-5">Wydarzenia</h1>
+    <!-- Search and Filter Form -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form method="GET" action="/events" class="row g-3">
+          <div class="col-md-6">
+            <div class="input-group">
+              <input type="text" class="form-control" name="search" placeholder="Szukaj po tytule" value="<%= search || '' %>">
+              <button class="btn btn-outline-secondary" type="submit">Szukaj</button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="row g-2">
+              <div class="col-auto">
+                <select class="form-select" name="sortBy">
+                  <option value="date" <%= sortBy === 'date' ? 'selected' : '' %>>Data</option>
+                  <option value="title" <%= sortBy === 'title' ? 'selected' : '' %>>Tytuł</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <select class="form-select" name="order">
+                  <option value="asc" <%= order === 'asc' ? 'selected' : '' %>>Rosnąco</option>
+                  <option value="desc" <%= order === 'desc' ? 'selected' : '' %>>Malejąco</option>
+                </select>
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Filtruj</button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-      <!-- Add Event Button (only for logged-in users) -->
-      <% if (isAuthenticated) { %>
-        <div class="text-center mb-4">
-          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
-            Dodaj nowe wydarzenie
-          </button>
+    <!-- Event List -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+      <%
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      events.forEach(event => {
+        const eventDate = new Date(event.date);
+        eventDate.setHours(0, 0, 0, 0);
+        const isPastEvent = eventDate < today;
+      %>
+        <div class="col">
+          <div class="card h-100 event-card shadow-sm <%= isPastEvent ? 'text-muted bg-light' : '' %>">
+            <% if (event.photo_url) { %>
+              <div class="event-image-container position-relative">
+                <img src="<%= event.photo_url %>" class="card-img-top event-image" alt="<%= event.title %>">
+                <% if (isPastEvent) { %>
+                  <div class="event-completed-overlay">
+                    <span class="badge bg-secondary px-3 py-2">Zakończone</span>
+                  </div>
+                <% } %>
+              </div>
+            <% } else if (isPastEvent) { %>
+              <!-- If no image but event is past, show badge at the top of card -->
+              <div class="text-center py-2 bg-secondary bg-opacity-25">
+                <span class="badge bg-secondary px-3 py-2">Zakończone</span>
+              </div>
+            <% } %>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title text-truncate <%= isPastEvent ? 'text-muted' : 'text-primary' %>" title="<%= event.title %>">
+                <%= event.title %>
+              </h5>
+              <p class="card-text description-truncate">
+                <%= event.description %>
+              </p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <small class="<%= isPastEvent ? 'text-muted' : 'text-muted' %>">
+                    <%= event.date.toISOString().split('T')[0] %>
+                  </small>
+                  <span class="badge <%= isPastEvent ? 'bg-light text-muted' : 'bg-light text-dark' %>">
+                    <%= event.location %>
+                  </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="btn-group">
+                    <% if (event.link) { %>
+                      <a href="<%= event.link %>" class="btn btn-sm btn-outline-secondary" target="_blank">Link</a>
+                    <% } %>
+                    <a href="/events/<%= event.id %>" class="btn btn-sm btn-outline-primary">Szczegóły</a>
+                    <% if (isAuthenticated && user.role === 'admin') { %>
+                      <a href="/events/<%= event.id %>/edit" class="btn btn-sm btn-outline-warning">Edytuj</a>
+                      <button type="button" class="btn btn-sm btn-outline-danger"
+                              data-bs-toggle="modal" data-bs-target="#deleteModal<%= event.id %>">
+                        Usuń
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      <% }) %>
+    </div>
 
-        <!-- Add Event Modal -->
-        <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <!-- Pagination -->
+    <nav aria-label="Event pagination">
+      <ul class="pagination justify-content-center">
+        <% for(let i = 1; i <= totalPages; i++) { %>
+          <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+            <a class="page-link" href="/events?page=<%= i %>&search=<%= search %>&sortBy=<%= sortBy %>&order=<%= order %>"><%= i %></a>
+          </li>
+        <% } %>
+      </ul>
+    </nav>
+
+    <!-- Delete Event Modals -->
+    <% if (isAuthenticated && user.role === 'admin') { %>
+      <% events.forEach(event => { %>
+        <div class="modal fade" id="deleteModal<%= event.id %>" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="addEventModalLabel">Dodaj nowe wydarzenie</h5>
+                <h5 class="modal-title">Potwierdź usunięcie</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
-                <form method="POST" action="/events/add" id="addEventForm">
-                  <div class="mb-3">
-                    <label for="title" class="form-label">Tytuł</label>
-                    <input type="text" class="form-control" id="title" name="title" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="location" class="form-label">Lokalizacja</label>
-                    <input type="text" class="form-control" id="location" name="location">
-                  </div>
-                  <div class="mb-3">
-                    <label for="date" class="form-label">Data</label>
-                    <input type="date" class="form-control" id="date" name="date" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="description" class="form-label">Opis</label>
-                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                  </div>
-                </form>
+                Czy na pewno chcesz usunąć wydarzenie "<%= event.title %>"?
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
-                <button type="submit" form="addEventForm" class="btn btn-primary">Dodaj</button>
+                <form action="/events/<%= event.id %>/delete" method="POST">
+                  <button type="submit" class="btn btn-danger">Tak, usuń</button>
+                </form>
               </div>
             </div>
           </div>
         </div>
-      <% } %>
-
-      <!-- Search and Filter Form -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-body">
-          <form method="GET" action="/events" class="row g-3">
-            <div class="col-md-6">
-              <div class="input-group">
-                <input type="text" class="form-control" name="search" placeholder="Szukaj po tytule" value="<%= search || '' %>">
-                <button class="btn btn-outline-secondary" type="submit">Szukaj</button>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="row g-2">
-                <div class="col-auto">
-                  <select class="form-select" name="sortBy">
-                    <option value="date" <%= sortBy === 'date' ? 'selected' : '' %>>Data</option>
-                    <option value="title" <%= sortBy === 'title' ? 'selected' : '' %>>Tytuł</option>
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <select class="form-select" name="order">
-                    <option value="asc" <%= order === 'asc' ? 'selected' : '' %>>Rosnąco</option>
-                    <option value="desc" <%= order === 'desc' ? 'selected' : '' %>>Malejąco</option>
-                  </select>
-                </div>
-                <div class="col-auto">
-                  <button type="submit" class="btn btn-primary">Filtruj</button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Event List -->
-      <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
-        <%
-        // Get current date (without time) for comparison
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        events.forEach(event => {
-          // Check if event date is in the past
-          const eventDate = new Date(event.date);
-          eventDate.setHours(0, 0, 0, 0);
-          const isPastEvent = eventDate < today;
-        %>
-        <div class="col">
-          <div class="card h-100 event-card shadow-sm <%= isPastEvent ? 'text-muted bg-light' : '' %>">
-            <div class="card-body">
-              <h5 class="card-title <%= isPastEvent ? 'text-muted' : 'text-primary' %>">
-                <%= event.title %>
-                <% if (isPastEvent) { %>
-                  <span class="badge bg-secondary ms-2">Zakończone</span>
-                <% } %>
-              </h5>
-              <p class="card-text"><%= event.description %></p>
-              <div class="d-flex justify-content-between align-items-center">
-                <small class="<%= isPastEvent ? 'text-muted' : 'text-muted' %>">
-                  <%= event.date.toISOString().split('T')[0] %>
-                </small>
-                <span class="badge <%= isPastEvent ? 'bg-light text-muted' : 'bg-light text-dark' %>">
-                  <%= event.location %>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <% }) %>
-      </div>
-
-      <!-- Pagination -->
-      <nav aria-label="Event pagination">
-        <ul class="pagination justify-content-center">
-          <% for(let i = 1; i <= totalPages; i++) { %>
-            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-              <a class="page-link" href="/events?page=<%= i %>&search=<%= search %>&sortBy=<%= sortBy %>&order=<%= order %>"><%= i %></a>
-            </li>
-          <% } %>
-        </ul>
-      </nav>
-    </div>
+      <% }) %>
+    <% } %>
 
     <!-- Logout Confirmation Modal -->
     <% if (isAuthenticated) { %>
-    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
+      <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
               <h5 class="modal-title" id="logoutModalLabel">Potwierdzenie wylogowania</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
               Czy jesteś pewny, że chcesz się wylogować?
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
               <a href="/auth/logout" class="btn btn-danger">Tak, wyloguj</a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     <% } %>
+  </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>

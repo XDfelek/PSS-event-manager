@@ -9,4 +9,12 @@ module.exports = {
     );
     res.redirect("/auth/login");
   },
+
+  isAdmin: (req, res, next) => {
+    if (req.session.isAuthenticated && req.session.user.role === "admin") {
+      return next();
+    }
+    req.flash("error", "Nie masz uprawnień administratora");
+    res.redirect("/events");
+  },
 };

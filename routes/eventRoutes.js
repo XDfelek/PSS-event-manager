@@ -6,10 +6,10 @@ module.exports = (eventService) => {
   // Lista wydarzeń z paginacją
   router.get("/", (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const pageSize = 5;
+    const pageSize = 9;
     const search = req.query.search || "";
     const sortBy = req.query.sortBy || "date";
-    const order = req.query.order || "asc";
+    const order = req.query.order || "desc";
 
     eventService.listEvents(
       page,

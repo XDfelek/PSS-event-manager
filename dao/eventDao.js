@@ -62,7 +62,7 @@ module.exports = (db) => {
 
     getById: (id, callback) => {
       const sql = `
-        SELECT e.*, u.username as creator_username
+        SELECT e.*, u.username as creator_username, u.id as creator_id, u.role as creator_role
         FROM events e
         JOIN users u ON e.created_by = u.id
         WHERE e.id = ?

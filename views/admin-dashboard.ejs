@@ -114,6 +114,21 @@
                         Nadaj uprawnienia
                       </button>
                     </form>
+                    <% } %> <% if (user.role !== 'admin' &&
+                    user.deleted_posts_count > 0) { %>
+                    <form
+                      action="/admin/reset-deletions/<%= user.id %><%= locals.search ? '?search=' + search : '' %>"
+                      method="POST"
+                      class="d-inline"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-secondary"
+                      >
+                        Reset usuniętych wydarzeń(<%= user.deleted_posts_count
+                        %>)
+                      </button>
+                    </form>
                     <% } %>
                   </td>
                 </tr>

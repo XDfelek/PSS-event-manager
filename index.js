@@ -44,14 +44,17 @@ app.use((req, res, next) => {
   next();
 });
 
-const eventDao = require("./dao/eventDao")(db);
+// Import DAOs
 const userDao = require("./dao/userDao")(db);
+const eventDao = require("./dao/eventDao")(db);
 
-const eventService = require("./services/eventService")(eventDao);
+// Create services
+const eventService = require("./services/eventService")(eventDao, userDao);
 const authService = require("./services/authService")(userDao);
 const adminService = require("./services/adminService")(userDao);
 
-const eventRoutes = require("./routes/eventRoutes")(eventService);
+// Pass services to routes
+const eventRoutes = require("./routes/eventRoutes")(eventService, userDao);
 const authRoutes = require("./routes/authRoutes")(authService);
 const adminRoutes = require("./routes/adminRoutes")(adminService);
 

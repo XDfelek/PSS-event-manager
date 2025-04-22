@@ -11,5 +11,9 @@ module.exports = (userDao) => {
     removeAdmin: (userId, callback) => {
       userDao.updateRole(userId, "user", callback);
     },
+
+    resetUserDeletions: (userId, callback) => {
+      userDao.resetDeletedPostsCount(userId, callback);
+    },
   };
 };

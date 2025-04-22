@@ -37,7 +37,8 @@ module.exports = (db) => {
     },
 
     getAllWithSearch: (search, callback) => {
-      let sql = "SELECT id, username, email, role, created_at FROM users";
+      let sql =
+        "SELECT id, username, email, role, created_at, deleted_posts_count FROM users";
       const params = [];
 
       if (search && search.trim() !== "") {
@@ -47,6 +48,25 @@ module.exports = (db) => {
 
       sql += " ORDER BY id ASC";
       db.query(sql, params, callback);
+    },
+
+    incrementDeletedPostsCount: (userId, callback) => {
+      const sql =
+        "UPDATE users SET deleted_posts_count = deleted_posts_count + 1 WHERE id = ?";
+      db.query(sql, [userId], callback);
+    },
+
+    getDeletedPostsCount: (userId, callback) => {
+      const sql = "SELECT deleted_posts_count FROM users WHERE id = ?";
+      db.query(sql, [userId], (err, results) => {
+        if (err) return callback(err);
+        callback(null, results[0] ? results[0].deleted_posts_count : 0);
+      });
+    },
+
+    resetDeletedPostsCount: (userId, callback) => {
+      const sql = "UPDATE users SET deleted_posts_count = 0 WHERE id = ?";
+      db.query(sql, [userId], callback);
     },
   };
 };

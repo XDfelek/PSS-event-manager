@@ -43,5 +43,22 @@ module.exports = (adminService) => {
     });
   });
 
+  // Reset user deletion counter
+  router.post("/reset-deletions/:id", isAdmin, (req, res) => {
+    adminService.resetUserDeletions(req.params.id, (err) => {
+      if (err) {
+        req.flash("error", "Błąd resetowania licznika usuniętych wydarzeń");
+      } else {
+        req.flash(
+          "success",
+          "Pomyślnie zresetowano licznik usuniętych wydarzeń"
+        );
+      }
+      res.redirect(
+        "/admin" + (req.query.search ? `?search=${req.query.search}` : "")
+      );
+    });
+  });
+
   return router;
 };

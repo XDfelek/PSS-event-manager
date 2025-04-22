@@ -1,4 +1,4 @@
-module.exports = (eventDao) => {
+module.exports = (eventDao, userDao) => {
   return {
     listEvents: (page, pageSize, search, sortBy, order, callback) => {
       const offset = (page - 1) * pageSize;
@@ -15,8 +15,28 @@ module.exports = (eventDao) => {
     },
 
     addEvent: (event, userId, callback) => {
-      const eventWithUser = { ...event, created_by: userId };
-      eventDao.create(eventWithUser, callback);
+      // If userDao is available, check deleted posts count
+      if (userDao) {
+        userDao.getDeletedPostsCount(userId, (err, count) => {
+          if (err) return callback(err);
+
+          if (count >= 5) {
+            return callback({
+              limitReached: true,
+              message:
+                "Nie możesz dodawać nowych wydarzeń. Limit usuniętych wydarzeń został osiągnięty.",
+            });
+          }
+
+          // If not reached limit, proceed with creating event
+          const eventWithUser = { ...event, created_by: userId };
+          eventDao.create(eventWithUser, callback);
+        });
+      } else {
+        // Fallback if userDao is not provided
+        const eventWithUser = { ...event, created_by: userId };
+        eventDao.create(eventWithUser, callback);
+      }
     },
 
     getEvent: (id, callback) => {
@@ -28,7 +48,38 @@ module.exports = (eventDao) => {
     },
 
     deleteEvent: (id, callback) => {
-      eventDao.delete(id, callback);
+      // First get the event details to check creator
+      eventDao.getById(id, (err, event) => {
+        if (err) return callback(err);
+        if (!event) return callback({ notFound: true });
+
+        // Proceed with deletion
+        eventDao.delete(id, (deleteErr) => {
+          if (deleteErr) return callback(deleteErr);
+
+          // If deleted event was created by a regular user (not admin), increment counter
+          if (userDao && event.creator_role !== "admin") {
+            userDao.incrementDeletedPostsCount(
+              event.creator_id,
+              (counterErr) => {
+                if (counterErr)
+                  console.error(
+                    "Error incrementing deletion counter:",
+                    counterErr
+                  );
+                // Even if there's an error with incrementing, we still return success
+                callback(null, {
+                  deleted: true,
+                  creatorId: event.creator_id,
+                  creatorRole: event.creator_role,
+                });
+              }
+            );
+          } else {
+            callback(null, { deleted: true });
+          }
+        });
+      });
     },
   };
 };

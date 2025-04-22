@@ -6,6 +6,44 @@
   <title>Lista wydarzeń</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    /* Particle background container */
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      background: dimgray;
+    }
+
+    /* Modal z-index fixes */
+    .modal-backdrop {
+      z-index: 2000 !important;
+    }
+
+    .modal {
+      z-index: 2100 !important;
+    }
+
+    /* Make cards and navbar semi-transparent */
+    .card, .navbar {
+      background-color: rgba(255, 255, 255, 0.85) !important;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Ensure content is above particles */
+    .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Improve contrast for text */
+    .card-title, .nav-link, h1, h5 {
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+    }
+
+    /* Event card styles */
     .event-card {
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -91,11 +129,14 @@
   </style>
 </head>
 <body class="bg-light">
+  <!-- Particles.js container -->
+  <div id="particles-js"></div>
+
   <div class="container py-5">
     <!-- Navigation bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white rounded shadow-sm mb-4">
+    <nav class="navbar navbar-expand-lg navbar-light rounded shadow-sm mb-4">
       <div class="container-fluid">
-        <a class="navbar-brand" href="/events">System wydarzeń</a>
+        <a class="navbar-brand" href="/events">Wielka Księga Wydarzeń</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -108,18 +149,18 @@
                 </li>
               <% } %>
               <li class="nav-item">
-                <span class="nav-link">Witaj, <%= user.username %>
+                <span class="nav-link">Użytkownik: <%= user.username %>
                   <% if (user.role === 'admin') { %>
                     <span class="badge bg-danger">Admin</span>
                   <% } %>
                 </span>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Wyloguj</a>
+                <a class="btn btn-outline-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Wyloguj</a>
               </li>
             <% } else { %>
               <li class="nav-item">
-                <a class="nav-link" href="/auth/login">Zaloguj</a>
+                <a class="btn btn-primary" href="/auth/login">Zaloguj</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="/auth/register">Zarejestruj</a>
@@ -130,58 +171,31 @@
       </div>
     </nav>
 
-    <h1 class="text-center mb-5">Wydarzenia</h1>
+    <!-- Warning for deletion limits -->
+    <% if (isAuthenticated && user.role !== 'admin' && (typeof deletedPostsCount !== 'undefined' && deletedPostsCount === 4)) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Uwaga!</strong> 4 Wydarzenia stworzone przez użytkownika zostały usunięte, po usunięciu piątego zostaną usunięte przywileje dodawania wydarzeń.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <% } %>
+
+    <!-- Page title -->
+    <div class="text-center mb-5">
+      <h1 class="d-inline-block px-4 py-2 bg-primary bg-opacity-75 text-white rounded-pill shadow-sm">Wydarzenia</h1>
+    </div>
 
     <!-- Add Event Button (only for logged in users) -->
     <% if (isAuthenticated) { %>
       <div class="text-center mb-4">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
-          Dodaj nowe wydarzenie
-        </button>
-      </div>
-
-      <!-- Add Event Modal -->
-      <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="addEventModalLabel">Dodaj nowe wydarzenie</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form method="POST" action="/events/add" id="addEventForm">
-                <div class="mb-3">
-                  <label for="title" class="form-label">Tytuł</label>
-                  <input type="text" class="form-control" id="title" name="title" required>
-                </div>
-                <div class="mb-3">
-                  <label for="location" class="form-label">Lokalizacja</label>
-                  <input type="text" class="form-control" id="location" name="location">
-                </div>
-                <div class="mb-3">
-                  <label for="date" class="form-label">Data</label>
-                  <input type="date" class="form-control" id="date" name="date" required>
-                </div>
-                <div class="mb-3">
-                  <label for="description" class="form-label">Opis</label>
-                  <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label for="link" class="form-label">Link</label>
-                  <input type="url" class="form-control" id="link" name="link" placeholder="https://...">
-                </div>
-                <div class="mb-3">
-                  <label for="photo_url" class="form-label">Link do zdjęcia</label>
-                  <input type="url" class="form-control" id="photo_url" name="photo_url" placeholder="https://...">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
-              <button type="submit" form="addEventForm" class="btn btn-primary">Dodaj</button>
-            </div>
-          </div>
-        </div>
+        <% if (user.role !== 'admin' && deletedPostsCount >= 5) { %>
+          <button type="button" class="btn btn-danger" disabled title="Osiągnięto limit usuniętych wydarzeń">
+            Osiągnięto limit usuniętych wydarzeń. Nie możesz dodawać nowych wydarzeń.
+          </button>
+        <% } else { %>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+            Dodaj nowe wydarzenie
+          </button>
+        <% } %>
       </div>
     <% } %>
 
@@ -263,6 +277,11 @@
                   </span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
+               <% if (user && user.role === 'admin') { %>
+                    <small class="text-muted text-truncate" style="max-width: 130px;" title="<%= event.creator_username ? 'Utworzone przez: ' + event.creator_username : '' %>">
+                    <% if (event.creator_username) { %>Przez: <%= event.creator_username %><% } %>
+                    </small>
+                  <% } %>
                   <div class="btn-group">
                     <% if (event.link) { %>
                       <a href="<%= event.link %>" class="btn btn-sm btn-outline-secondary" target="_blank">Link</a>
@@ -294,54 +313,181 @@
         <% } %>
       </ul>
     </nav>
+  </div>
 
-    <!-- Delete Event Modals -->
-    <% if (isAuthenticated && user.role === 'admin') { %>
-      <% events.forEach(event => { %>
-        <div class="modal fade" id="deleteModal<%= event.id %>" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Potwierdź usunięcie</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <!-- Add Event Modal -->
+  <% if (isAuthenticated && (user.role === 'admin' || deletedPostsCount < 5)) { %>
+    <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addEventModalLabel">Dodaj nowe wydarzenie</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="/events/add" id="addEventForm">
+              <div class="mb-3">
+                <label for="title" class="form-label">Tytuł</label>
+                <input type="text" class="form-control" id="title" name="title" required>
               </div>
-              <div class="modal-body">
-                Czy na pewno chcesz usunąć wydarzenie "<%= event.title %>"?
+              <div class="mb-3">
+                <label for="location" class="form-label">Lokalizacja</label>
+                <input type="text" class="form-control" id="location" name="location">
               </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
-                <form action="/events/<%= event.id %>/delete" method="POST">
-                  <button type="submit" class="btn btn-danger">Tak, usuń</button>
-                </form>
+              <div class="mb-3">
+                <label for="date" class="form-label">Data</label>
+                <input type="date" class="form-control" id="date" name="date" required>
               </div>
-            </div>
+              <div class="mb-3">
+                <label for="description" class="form-label">Opis</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="link" class="form-label">Link</label>
+                <input type="url" class="form-control" id="link" name="link" placeholder="https://...">
+              </div>
+              <div class="mb-3">
+                <label for="photo_url" class="form-label">Link do zdjęcia</label>
+                <input type="url" class="form-control" id="photo_url" name="photo_url" placeholder="https://...">
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+            <button type="submit" form="addEventForm" class="btn btn-primary">Dodaj</button>
           </div>
         </div>
-      <% }) %>
-    <% } %>
+      </div>
+    </div>
+  <% } %>
 
-    <!-- Logout Confirmation Modal -->
-    <% if (isAuthenticated) { %>
-      <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <!-- Delete Event Modals -->
+  <% if (isAuthenticated && user.role === 'admin') { %>
+    <% events.forEach(event => { %>
+      <div class="modal fade" id="deleteModal<%= event.id %>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title" id="logoutModalLabel">Potwierdzenie wylogowania</h5>
+              <h5 class="modal-title">Potwierdź usunięcie</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              Czy jesteś pewny, że chcesz się wylogować?
+              Czy na pewno chcesz usunąć wydarzenie "<%= event.title %>"?
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
-              <a href="/auth/logout" class="btn btn-danger">Tak, wyloguj</a>
+              <form action="/events/<%= event.id %>/delete" method="POST">
+                <button type="submit" class="btn btn-danger">Tak, usuń</button>
+              </form>
             </div>
           </div>
         </div>
       </div>
-    <% } %>
-  </div>
+    <% }) %>
+  <% } %>
 
+  <!-- Logout Confirmation Modal -->
+  <% if (isAuthenticated) { %>
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logoutModalLabel">Potwierdzenie wylogowania</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Czy jesteś pewny, że chcesz się wylogować?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+            <a href="/auth/logout" class="btn btn-danger">Tak, wyloguj</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Bootstrap and Particles.js Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize particles.js
+      particlesJS('particles-js', {
+        particles: {
+          number: {
+            value: 80,
+            density: { enable: true, value_area: 800 }
+          },
+          color: {
+            value: "#ffffff"
+          },
+          shape: {
+            type: "circle",
+            stroke: { width: 0, color: "#000000" },
+            polygon: { nb_sides: 5 }
+          },
+          opacity: {
+            value: 0.5,
+            random: false,
+            anim: { enable: false }
+          },
+          size: {
+            value: 5,
+            random: true,
+            anim: { enable: false }
+          },
+          line_linked: {
+            enable: true,
+            distance: 150,
+            color: "#ffffff",
+            opacity: 0.4,
+            width: 1
+          },
+          move: {
+            enable: true,
+            speed: 2,
+            direction: "none",
+            random: false,
+            straight: false,
+            out_mode: "out",
+            bounce: false
+          }
+        },
+        interactivity: {
+          detect_on: "canvas",
+          events: {
+            onhover: { enable: true, mode: "repulse" },
+            onclick: { enable: true, mode: "push" },
+            resize: true
+          },
+          modes: {
+            repulse: { distance: 100, duration: 0.4 },
+            push: { particles_nb: 4 }
+          }
+        },
+        retina_detect: true
+      });
+
+      // Fix for modal issues by ensuring they're manually initialized
+      var modals = document.querySelectorAll('.modal');
+      modals.forEach(function(modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+
+        // Store modal in a data attribute for debugging
+        modalEl._bootstrapModal = modal;
+      });
+
+      // Debug function for manually showing modals if needed
+      window.openModal = function(modalId) {
+        var modalEl = document.getElementById(modalId);
+        if (modalEl && modalEl._bootstrapModal) {
+          modalEl._bootstrapModal.show();
+          return true;
+        }
+        return false;
+      };
+    });
+  </script>
 </body>
 </html>

@@ -39,7 +39,7 @@
                   <span class="nav-link">Witaj, <%= user.username %></span>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="/auth/logout">Wyloguj</a>
+                  <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Wyloguj</a>
                 </li>
               <% } else { %>
                 <li class="nav-item">
@@ -163,6 +163,27 @@
         </ul>
       </nav>
     </div>
+
+    <!-- Logout Confirmation Modal -->
+    <% if (isAuthenticated) { %>
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="logoutModalLabel">Potwierdzenie wylogowania</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              Czy jesteś pewny, że chcesz się wylogować?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+              <a href="/auth/logout" class="btn btn-danger">Tak, wyloguj</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
 
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

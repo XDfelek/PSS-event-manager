@@ -101,7 +101,7 @@
                   ><%= event.link %></a
                 >
               </p>
-              <% } %> <% if (isAuthenticated && user.role === 'admin') { %>
+              <% } %> <% if (isAuthenticated && user.role === 'moderator') { %>
               <div class="mt-3">
                 <a href="/events/<%= event.id %>/edit" class="btn btn-warning"
                   >Edytuj wydarzenie</a

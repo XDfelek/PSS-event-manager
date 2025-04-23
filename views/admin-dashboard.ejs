@@ -82,13 +82,41 @@
                   <td>
                     <% if (user.role === 'admin') { %>
                     <span class="badge bg-danger">Administrator</span>
+                    <% } else if (user.role === 'moderator') { %>
+                    <span class="badge bg-primary">Moderator</span>
                     <% } else { %>
                     <span class="badge bg-secondary">Użytkownik</span>
                     <% } %>
                   </td>
                   <td><%= new Date(user.created_at).toLocaleString() %></td>
                   <td>
-                    <% if (user.role === 'admin') { %>
+                    <% if (user.role === 'moderator') { %>
+                    <form
+                      action="/admin/remove-moderator/<%= user.id %><%= locals.search ? '?search=' + search : '' %>"
+                      method="POST"
+                      class="d-inline"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                      >
+                        Odbierz uprawnienia Moderatora
+                      </button>
+                    </form>
+                    <% } else { %>
+                    <form
+                      action="/admin/make-moderator/<%= user.id %><%= locals.search ? '?search=' + search : '' %>"
+                      method="POST"
+                      class="d-inline"
+                    >
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-primary"
+                      >
+                        Nadaj uprawnienia Moderatora
+                      </button>
+                    </form>
+                    <% } %> <% if (user.role === 'admin') { %>
                     <form
                       action="/admin/remove-admin/<%= user.id %><%= locals.search ? '?search=' + search : '' %>"
                       method="POST"
@@ -98,7 +126,7 @@
                         type="submit"
                         class="btn btn-sm btn-outline-danger"
                       >
-                        Odbierz uprawnienia
+                        Odbierz uprawnienia Administratora
                       </button>
                     </form>
                     <% } else { %>
@@ -111,11 +139,11 @@
                         type="submit"
                         class="btn btn-sm btn-outline-primary"
                       >
-                        Nadaj uprawnienia
+                        Nadaj uprawnienia Administratora
                       </button>
                     </form>
-                    <% } %> <% if (user.role !== 'admin' &&
-                    user.deleted_posts_count > 0) { %>
+                    <% } %> <% if (user.role !== 'moderator' && user.role !==
+                    'admin' && user.deleted_posts_count > 0) { %>
                     <form
                       action="/admin/reset-deletions/<%= user.id %><%= locals.search ? '?search=' + search : '' %>"
                       method="POST"

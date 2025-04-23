@@ -12,6 +12,14 @@ module.exports = (userDao) => {
       userDao.updateRole(userId, "user", callback);
     },
 
+    makeModerator: (userId, callback) => {
+      userDao.updateRole(userId, "moderator", callback);
+    },
+
+    removeModerator: (userId, callback) => {
+      userDao.updateRole(userId, "user", callback);
+    },
+
     resetUserDeletions: (userId, callback) => {
       userDao.resetDeletedPostsCount(userId, callback);
     },

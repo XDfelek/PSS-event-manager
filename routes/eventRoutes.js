@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { isAuthenticated, isAdmin } = require("../middleware/auth");
+const { isAuthenticated, isAdmin, isModerator } = require("../middleware/auth");
 
 module.exports = (eventService, userDao) => {
   // Lista wydarzeń z paginacją
@@ -92,7 +92,7 @@ module.exports = (eventService, userDao) => {
     });
   });
 
-  router.get("/:id/edit", isAdmin, (req, res) => {
+  router.get("/:id/edit", isModerator, (req, res) => {
     eventService.getEvent(req.params.id, (err, event) => {
       if (err) return res.status(500).send("Błąd pobierania wydarzenia");
       if (!event)
@@ -102,7 +102,7 @@ module.exports = (eventService, userDao) => {
     });
   });
 
-  router.post("/:id/edit", isAdmin, (req, res) => {
+  router.post("/:id/edit", isModerator, (req, res) => {
     eventService.updateEvent(req.params.id, req.body, (err) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
@@ -118,7 +118,7 @@ module.exports = (eventService, userDao) => {
   });
 
   // Delete event (admin only)
-  router.post("/:id/delete", isAdmin, (req, res) => {
+  router.post("/:id/delete", isModerator, (req, res) => {
     eventService.deleteEvent(req.params.id, (err, result) => {
       if (err) {
         req.flash("error", "Błąd usuwania wydarzenia");
@@ -126,7 +126,11 @@ module.exports = (eventService, userDao) => {
       }
 
       // If we deleted a non-admin user's post, check their count
-      if (result && result.creatorRole !== "admin") {
+      if (
+        result &&
+        result.creatorRole !== "admin" &&
+        result.creatorRole !== "moderator"
+      ) {
         // Add a check for userDao before using it
         if (userDao) {
           userDao.getDeletedPostsCount(result.creatorId, (countErr, count) => {

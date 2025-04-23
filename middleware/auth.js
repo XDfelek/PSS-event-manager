@@ -10,6 +10,14 @@ module.exports = {
     res.redirect("/auth/login");
   },
 
+  isModerator: (req, res, next) => {
+    if (req.session.isAuthenticated && req.session.user.role === "moderator") {
+      return next();
+    }
+    req.flash("error", "Nie masz uprawnień administratora");
+    res.redirect("/events");
+  },
+
   isAdmin: (req, res, next) => {
     if (req.session.isAuthenticated && req.session.user.role === "admin") {
       return next();

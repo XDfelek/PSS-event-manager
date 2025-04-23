@@ -43,6 +43,34 @@ module.exports = (adminService) => {
     });
   });
 
+  // Make user a moderator
+  router.post("/make-moderator/:id", isAdmin, (req, res) => {
+    adminService.makeModerator(req.params.id, (err) => {
+      if (err) {
+        req.flash("error", "Błąd nadawania uprawnień administratora");
+      } else {
+        req.flash("success", "Pomyślnie nadano uprawnienia administratora");
+      }
+      res.redirect(
+        "/admin" + (req.query.search ? `?search=${req.query.search}` : "")
+      );
+    });
+  });
+
+  // Remove moderator privileges
+  router.post("/remove-moderator/:id", isAdmin, (req, res) => {
+    adminService.removeModerator(req.params.id, (err) => {
+      if (err) {
+        req.flash("error", "Błąd odbierania uprawnień administratora");
+      } else {
+        req.flash("success", "Pomyślnie odebrano uprawnienia administratora");
+      }
+      res.redirect(
+        "/admin" + (req.query.search ? `?search=${req.query.search}` : "")
+      );
+    });
+  });
+
   // Reset user deletion counter
   router.post("/reset-deletions/:id", isAdmin, (req, res) => {
     adminService.resetUserDeletions(req.params.id, (err) => {
